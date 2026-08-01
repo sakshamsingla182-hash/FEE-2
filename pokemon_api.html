@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokemon Explorer</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#74ebd5,#ACB6E5);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.container{
+    width:420px;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,0.2);
+    text-align:center;
+}
+
+h1{
+    color:#333;
+    margin-bottom:10px;
+}
+
+p{
+    color:#666;
+}
+
+.searchBox{
+    margin-top:20px;
+}
+
+input{
+    width:70%;
+    padding:10px;
+    border:2px solid #2196f3;
+    border-radius:8px;
+    outline:none;
+    font-size:16px;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    background:#2196f3;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+button:hover{
+    background:#1976d2;
+}
+
+#loading{
+    margin-top:20px;
+    display:none;
+    color:red;
+    font-weight:bold;
+}
+
+.card{
+    display:none;
+    margin-top:25px;
+}
+
+.card img{
+    width:180px;
+    height:180px;
+}
+
+.card h2{
+    margin-top:10px;
+    color:#222;
+}
+
+.info{
+    margin-top:15px;
+    text-align:left;
+}
+
+.info p{
+    margin:8px;
+    color:#333;
+}
+
+ul{
+    margin-top:8px;
+    padding-left:25px;
+}
+
+#error{
+    margin-top:20px;
+    color:red;
+    font-weight:bold;
+}
+
+@media(max-width:500px){
+
+.container{
+    width:90%;
+}
+
+input{
+    width:100%;
+    margin-bottom:10px;
+}
+
+button{
+    width:100%;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎮 Pokemon Explorer</h1>
+
+<p>Search your Favourite Pokemon</p>
+
+<div class="searchBox">
+
+<input
+type="text"
+id="pokemonName"
+placeholder="Enter Pokemon Name">
+
+<br><br>
+
+<button id="searchBtn">
+Search
+</button>
+
+</div>
+
+<div id="loading">
+Loading...
+</div>
+
+<div class="card" id="card">
+
+<img
+id="image"
+src="">
+
+<h2 id="name"></h2>
+
+<div class="info">
+
+<p><b>Type :</b> <span id="type"></span></p>
+
+<p><b>Height :</b> <span id="height"></span></p>
+
+<p><b>Weight :</b> <span id="weight"></span></p>
+
+<p><b>Abilities</b></p>
+
+<ul id="abilities">
+
+</ul>
+
+</div>
+
+</div>
+
+<p id="error"></p>
+
+</div>
+
+<script>
+
+var button=document.getElementById("searchBtn");
+
+button.addEventListener("click",searchPokemon);
+
+document.getElementById("pokemonName").addEventListener("keypress",function(event){
+
+if(event.key==="Enter"){
+
+searchPokemon();
+
+}
+
+});
+
+function searchPokemon(){
+
+var pokemon=document.getElementById("pokemonName").value.toLowerCase().trim();
+
+if(pokemon==""){
+
+alert("Please Enter Pokemon Name");
+
+return;
+
+}
+
+document.getElementById("loading").style.display="block";
+
+document.getElementById("card").style.display="none";
+
+document.getElementById("error").innerHTML="";
+
+fetch("https://pokeapi.co/api/v2/pokemon/"+pokemon)
+
+.then(function(response){
+
+if(!response.ok){
+
+throw new Error("Pokemon Not Found");
+
+}
+
+return response.json();
+
+})
+
+.then(function(data){
+
+document.getElementById("loading").style.display="none";
+
+document.getElementById("card").style.display="block";
+
+document.getElementById("image").src=data.sprites.front_default;
+
+document.getElementById("name").innerHTML=
+data.name.toUpperCase();
+
+document.getElementById("type").innerHTML=
+data.types[0].type.name;
+
+document.getElementById("height").innerHTML=
+data.height;
+
+document.getElementById("weight").innerHTML=
+data.weight;
+
+var list=document.getElementById("abilities");
+
+list.innerHTML="";
+
+for(var i=0;i<data.abilities.length;i++){
+
+var li=document.createElement("li");
+
+li.innerHTML=
+data.abilities[i].ability.name;
+
+list.appendChild(li);
+
+}
+})
+.catch(function(error){
+
+document.getElementById("loading").style.display="none";
+
+document.getElementById("card").style.display="none";
+
+document.getElementById("error").innerHTML=error.message;
+
+});
+
+}
+</script>
+
+</body>
+</html>
+
+<!-- 
+In this project you are using the PokéAPI.
+
+Base URL
+https://pokeapi.co/api/v2/
+
+This is the main API address.
+
+Endpoint Used
+pokemon/{name}
+
+Here {name} is replaced with a Pokémon's name.
+
+Example:
+
+https://pokeapi.co/api/v2/pokemon/pikachu
+
+or
+
+https://pokeapi.co/api/v2/pokemon/charizard
+
+This endpoint returns detailed information about a Pokémon.
+
+Request Method
+GET
+
+A GET request means you are only asking the server for data—you are not creating, updating, or deleting anything.
+
+Response Format
+
+The API returns data in JSON (JavaScript Object Notation). -->
