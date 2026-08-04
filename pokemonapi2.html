@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Pokemon Explorer</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+body{
+
+background:linear-gradient(135deg,#4facfe,#00f2fe);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+
+}
+
+.container{
+
+width:450px;
+background:rgba(255,255,255,.18);
+backdrop-filter:blur(18px);
+border-radius:20px;
+padding:30px;
+box-shadow:0 10px 25px rgba(0,0,0,.25);
+text-align:center;
+border:1px solid rgba(255,255,255,.3);
+
+}
+
+h1{
+
+color:white;
+font-size:34px;
+margin-bottom:8px;
+
+}
+
+.subtitle{
+
+color:white;
+margin-bottom:25px;
+font-size:15px;
+
+}
+
+.searchBox{
+
+display:flex;
+flex-direction:column;
+gap:12px;
+
+}
+
+input{
+
+padding:14px;
+border:none;
+border-radius:30px;
+font-size:17px;
+outline:none;
+text-align:center;
+
+}
+
+.buttons{
+
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+
+}
+
+button{
+
+padding:12px 22px;
+border:none;
+border-radius:30px;
+cursor:pointer;
+font-size:16px;
+font-weight:bold;
+transition:.3s;
+
+}
+
+#searchBtn{
+
+background:#ffcb05;
+color:#222;
+
+}
+
+#searchBtn:hover{
+
+background:#f7b500;
+transform:scale(1.05);
+
+}
+
+#clearBtn{
+
+background:#ff5252;
+color:white;
+
+}
+
+#clearBtn:hover{
+
+background:#e53935;
+transform:scale(1.05);
+
+}
+
+#loading{
+
+display:none;
+margin-top:20px;
+color:white;
+font-size:18px;
+font-weight:bold;
+
+}
+
+.card{
+
+display:none;
+margin-top:25px;
+background:white;
+border-radius:18px;
+padding:20px;
+box-shadow:0 8px 20px rgba(0,0,0,.2);
+
+}
+
+.card img{
+
+width:170px;
+height:170px;
+background:#f3f3f3;
+padding:15px;
+border-radius:50%;
+
+}
+
+.card h2{
+
+margin:15px 0;
+color:#333;
+letter-spacing:2px;
+
+}
+
+.info{
+
+margin-top:20px;
+text-align:left;
+
+}
+
+.info p{
+
+background:#f7f7f7;
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+
+}
+
+.info b{
+
+color:#1565c0;
+
+}
+
+ul{
+
+padding-left:25px;
+margin-top:10px;
+
+}
+
+li{
+
+margin:6px 0;
+
+}
+
+#error{
+
+margin-top:20px;
+font-size:18px;
+font-weight:bold;
+color:#ffe600;
+
+}
+
+.footer{
+
+margin-top:20px;
+color:white;
+font-size:13px;
+
+}
+
+@media(max-width:500px){
+
+.container{
+
+width:100%;
+
+}
+
+.buttons{
+
+flex-direction:column;
+
+}
+
+button{
+
+width:100%;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⚡ Pokemon Explorer</h1>
+
+<p class="subtitle">
+Search your favourite Pokémon and discover its details instantly.
+</p>
+
+<div class="searchBox">
+
+<input
+type="text"
+id="pokemonName"
+placeholder="Enter Pokemon Name">
+
+<div class="buttons">
+
+<button id="searchBtn">
+🔍 Search
+</button>
+
+<button id="clearBtn">
+🗑 Clear History
+</button>
+
+</div>
+
+</div>
+
+<div id="loading">
+Loading Pokemon...
+</div>
+
+<div class="card" id="card">
+
+<img
+id="image"
+src="">
+
+<h2 id="name"></h2>
+
+<hr style="margin:15px 0;">
+
+<div class="info">
+
+<p>
+<b>Type :</b>
+<span id="type"></span>
+</p>
+
+<p>
+<b>Height :</b>
+<span id="height"></span>
+</p>
+
+<p>
+<b>Weight :</b>
+<span id="weight"></span>
+</p>
+
+<p>
+<b>Abilities :</b>
+</p>
+
+<ul id="abilities">
+
+</ul>
+
+</div>
+
+</div>
+
+<p id="error"></p>
+
+<p class="footer">
+Made using PokeAPI
+</p>
+
+</div>
+
+<script>
+
+var button = document.getElementById("searchBtn");
+
+button.addEventListener("click", searchPokemon);
+
+document.getElementById("pokemonName").addEventListener("keypress", function(event){
+
+    if(event.key === "Enter"){
+        searchPokemon();
+    }
+
+});
+
+document.getElementById("clearBtn").addEventListener("click", function(){
+
+    localStorage.removeItem("lastPokemon");
+
+    document.getElementById("pokemonName").value = "";
+
+    document.getElementById("card").style.display = "none";
+
+    document.getElementById("error").innerHTML = "";
+
+    alert("Search history cleared!");
+
+});
+
+window.onload = function(){
+
+    var lastPokemon = localStorage.getItem("lastPokemon");
+
+    if(lastPokemon != null){
+
+        document.getElementById("pokemonName").value = lastPokemon;
+
+        searchPokemon();
+
+    }
+
+};
+
+function searchPokemon(){
+
+    var pokemon = document.getElementById("pokemonName").value.toLowerCase().trim();
+
+    if(pokemon == ""){
+
+        alert("Please enter a Pokemon name.");
+
+        return;
+
+    }
+
+    localStorage.setItem("lastPokemon", pokemon);
+
+    document.getElementById("loading").style.display = "block";
+
+    document.getElementById("card").style.display = "none";
+
+    document.getElementById("error").innerHTML = "";
+
+    fetch("https://pokeapi.co/api/v2/pokemon/" + pokemon)
+
+    .then(function(response){
+
+        if(!response.ok){
+
+            throw new Error("Pokemon Not Found!");
+
+        }
+
+        return response.json();
+
+    })
+
+    .then(function(data){
+
+        document.getElementById("loading").style.display = "none";
+
+        document.getElementById("card").style.display = "block";
+
+        document.getElementById("image").src = data.sprites.other["official-artwork"].front_default || data.sprites.front_default;
+
+        document.getElementById("name").innerHTML = data.name.toUpperCase();
+
+       
+        var types = "";
+
+        for(var i=0;i<data.types.length;i++){
+
+            types += data.types[i].type.name;
+
+            if(i != data.types.length-1){
+                types += ", ";
+            }
+
+        }
+
+        document.getElementById("type").innerHTML = types;
+
+        document.getElementById("height").innerHTML = data.height + " dm";
+
+        document.getElementById("weight").innerHTML = data.weight + " hg";
+
+        
+        var list = document.getElementById("abilities");
+
+        list.innerHTML = "";
+
+        for(var i=0;i<data.abilities.length;i++){
+
+            var li = document.createElement("li");
+
+            li.innerHTML = data.abilities[i].ability.name;
+
+            list.appendChild(li);
+
+        }
+//change kardi background color
+        var firstType = data.types[0].type.name;
+
+        if(firstType == "fire"){
+
+            document.body.style.background =
+            "linear-gradient(135deg,#ff512f,#f09819)";
+
+        }
+        else if(firstType == "water"){
+
+            document.body.style.background =
+            "linear-gradient(135deg,#2193b0,#6dd5ed)";
+
+        }
+        else if(firstType == "grass"){
+
+            document.body.style.background =
+            "linear-gradient(135deg,#56ab2f,#a8e063)";
+
+        }
+        else if(firstType == "electric"){
+
+            document.body.style.background =
+            "linear-gradient(135deg,#f7971e,#ffd200)";
+
+        }
+        else if(firstType == "psychic"){
+
+            document.body.style.background =
+            "linear-gradient(135deg,#fc5c7d,#6a82fb)";
+
+        }
+        else{
+
+            document.body.style.background =
+            "linear-gradient(135deg,#4facfe,#00f2fe)";
+
+        }
+
+    })
+
+    .catch(function(error){
+
+        document.getElementById("loading").style.display = "none";
+
+        document.getElementById("card").style.display = "none";
+
+        document.getElementById("error").innerHTML = error.message;
+
+    });
+
+}
+
+</script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
