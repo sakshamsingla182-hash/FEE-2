@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+</head>
+<body style="background:#f4f4f4;">
+
+    <div id="todo"></div>
+
+    <script>
+        (function () {
+
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+    const todocontainer = document.getElementById("todo");
+
+    todocontainer.style.width = "500px";
+    todocontainer.style.margin = "40px auto";
+    todocontainer.style.padding = "20px";
+    todocontainer.style.borderRadius = "15px";
+    todocontainer.style.background = "linear-gradient(135deg,#4facfe,#00f2fe)";
+    todocontainer.style.boxShadow = "0px 5px 15px rgba(0,0,0,0.3)";
+    todocontainer.style.fontFamily = "Arial";
+    todocontainer.style.color = "white";
+
+    const heading = document.createElement("h2");
+    heading.textContent = "My Todo App";
+    heading.style.textAlign = "center";
+
+    const inputtask = document.createElement("input");
+    inputtask.type = "text";
+    inputtask.placeholder = "Enter task...";
+    inputtask.style.width = "95%";
+    inputtask.style.padding = "10px";
+    inputtask.style.marginBottom = "10px";
+
+    const addbutton = document.createElement("button");
+    addbutton.textContent = "Add";
+    addbutton.style.margin = "5px";
+    addbutton.style.padding = "8px 15px";
+
+    const search = document.createElement("input");
+    search.type = "text";
+    search.placeholder = "Search task...";
+    search.style.width = "95%";
+    search.style.padding = "10px";
+    search.style.margin = "10px 0";
+
+    const deleteAll = document.createElement("button");
+    deleteAll.textContent = "Delete All";
+    deleteAll.style.margin = "5px";
+    deleteAll.style.padding = "8px 15px";
+
+    const todolist = document.createElement("div");
+    todolist.style.background = "white";
+    todolist.style.color = "black";
+    todolist.style.borderRadius = "10px";
+    todolist.style.padding = "10px";
+    todolist.style.marginTop = "15px";
+    todolist.style.minHeight = "100px";
+
+    todocontainer.append(
+        heading,
+        inputtask,
+        addbutton,
+        search,
+        deleteAll,
+        todolist
+    );
+
+    function save() {
+        localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    function renderAll() {
+
+        todolist.innerHTML = "";
+
+        todos.forEach(function (task) {
+
+            if (
+                search.value &&
+                !task.name.toLowerCase().includes(search.value.toLowerCase())
+            ) {
+                return;
+            }
+
+            renderTask(task);
+        });
+    }
+
+    function renderTask(task) {
+
+        const todoitem = document.createElement("div");
+        todoitem.style.border = task.favorite ? "3px solid gold" : "2px solid red";
+        todoitem.style.margin = "8px 0";
+        todoitem.style.padding = "10px";
+        todoitem.style.borderRadius = "8px";
+        todoitem.style.background = task.completed ? "lightgreen" : "#f9f9f9";
+
+        const p = document.createElement("p");
+        p.textContent = task.name;
+        p.style.display = "inline-block";
+        p.style.width = "170px";
+
+        const completebtn = document.createElement("button");
+        completebtn.textContent = "Complete";
+
+        const editbtn = document.createElement("button");
+        editbtn.textContent = "Edit";
+
+        const deletebtn = document.createElement("button");
+        deletebtn.textContent = "Delete";
+
+        const favbtn = document.createElement("button");
+        favbtn.innerHTML = task.favorite ? "&#127775;" : "&#11088;";
+
+        completebtn.style.margin = "2px";
+        editbtn.style.margin = "2px";
+        deletebtn.style.margin = "2px";
+        favbtn.style.margin = "2px";
+
+        completebtn.addEventListener("click", function () {
+
+            task.completed = true;
+
+            save();
+            renderAll();
+
+        });
+
+        favbtn.addEventListener("click", function () {
+
+            task.favorite = !task.favorite;
+
+            todos.sort(function (a, b) {
+                return b.favorite - a.favorite;
+            });
+
+            save();
+            renderAll();
+
+        });
+
+        editbtn.addEventListener("click", function () {
+
+            editbtn.style.display = "none";
+
+            const editinput = document.createElement("input");
+            editinput.type = "text";
+            editinput.value = task.name;
+            editinput.focus();
+
+            const savebtn = document.createElement("button");
+            savebtn.textContent = "Save";
+
+            todoitem.prepend(editinput, savebtn);
+
+            savebtn.addEventListener("click", function () {
+
+                const newTask = editinput.value.trim();
+
+                if (!newTask) {
+                    return;
+                }
+
+                task.name = newTask;
+
+                save();
+                renderAll();
+
+            });
+
+        });
+
+        deletebtn.addEventListener("click", function () {
+
+            todos = todos.filter(function (t) {
+                return t !== task;
+            });
+
+            save();
+            renderAll();
+
+        });
+
+        todoitem.append(
+            p,
+            favbtn,
+            editbtn,
+            deletebtn,
+            completebtn
+        );
+
+        if (task.favorite) {
+            todolist.prepend(todoitem);
+        } else {
+            todolist.append(todoitem);
+        }
+
+    }
+
+    function addTodo() {
+
+        const task = inputtask.value.trim();
+
+        if (!task) {
+            return;
+        }
+
+        todos.unshift({
+            name: task,
+            completed: false,
+            favorite: false
+        });
+
+        save();
+        renderAll();
+
+        inputtask.value = "";
+        inputtask.focus();
+
+    }
+
+    addbutton.addEventListener("click", addTodo);
+
+    inputtask.addEventListener("keydown", function (e) {
+
+        if (e.key === "Enter") {
+            addTodo();
+        }
+
+    });
+
+    search.addEventListener("input", renderAll);
+
+    deleteAll.addEventListener("click", function () {
+
+        if (confirm("Delete all tasks?")) {
+
+            todos = [];
+            save();
+            renderAll();
+
+        }
+
+    });
+
+    renderAll();
+
+})();
+    </script>
+
+</body>
+</html>
